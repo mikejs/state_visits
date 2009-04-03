@@ -34,6 +34,8 @@ def parse_date(date):
     date = date.replace('206', '2006').replace('July 68', 'July 8')
     date = date.replace('October 2023', 'October 20-23')
     date = date.replace('December 14 and 15', 'December 14-15')
+    date = date.replace('March 18-19 and 20', 'March 18-20')
+    date = date.replace('October 23-24 and 25-26', 'October 23-26')
 
     match = re.search('(%s)\s{0,}(\d{1,2})[,.;]{0,1}\s+(\d{4})' % month_re, date)
     if match:
@@ -48,6 +50,13 @@ def parse_date(date):
         d1 = dt.date(int(match.group(4)), month, int(match.group(2)))
         d2 = dt.date(int(match.group(4)), month, int(match.group(3)))
         return "%s to %s" % (d1.isoformat(), d2.isoformat())
+
+    match = re.search('(%s)\s{0,}(\d{1,2}) and (\d{1,2})[,.;]{0,1}\s+(\d{4})' % month_re, date)
+    if match:
+        month = months.index(match.group(1)) + 1
+        d1 = dt.date(int(match.group(4)), month, int(match.group(2)))
+        d2 = dt.date(int(match.group(4)), month, int(match.group(3)))
+        return "%s and %s" % (d1.isoformat(), d2.isoformat())
 
     match = re.search("(%s)\s{0,}(\d{1,2})-\s{0,}(%s)\s+(\d{1,2})[,.;]{0,1}\s+(\d{4})" % (month_re, month_re), date)
     if match:
@@ -113,7 +122,7 @@ def out_visits(url, filename):
 
     list = BeautifulSoup(urllib2.urlopen(url).read())
 
-    for link in list.find('div', id='body-row02').findAll('a'):
+    for link in list.find('div', id='body-col02-row02').findAll('a'):
         visitor = link.string.strip()
 
         visit_list = BeautifulSoup(urllib2.urlopen(link['href']).read())
@@ -155,7 +164,7 @@ def out_visits(url, filename):
 
 if __name__ == "__main__":
     in_visits("incoming_visits.csv")
-    out_visits("http://www.state.gov/r/pa/ho/c1792.htm",
+    out_visits("http://www.state.gov/r/pa/ho/trvl/pres/c7383.htm",
                "./presidential_visits.csv")
     out_visits("http://www.state.gov/r/pa/ho/trvl/ls/index.htm",
                "./secretary_visits.csv")

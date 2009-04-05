@@ -5,6 +5,12 @@ import urllib2
 import datetime as dt
 from BeautifulSoup import BeautifulSoup
 
+def get_text(elem):
+    str = ""
+    for text in elem.findAll(text=True):
+        str += text
+    return str
+
 def clean(str):
     str = str.replace('&nbsp;', ' ').replace('&amp;', 'and').strip()
 
@@ -31,11 +37,13 @@ def parse_date(date):
               "August","September","October","November","December"]
     month_re = '|'.join(months)
 
+    # Fix some specific cases
     date = date.replace('206', '2006').replace('July 68', 'July 8')
     date = date.replace('October 2023', 'October 20-23')
     date = date.replace('December 14 and 15', 'December 14-15')
     date = date.replace('March 18-19 and 20', 'March 18-20')
     date = date.replace('October 23-24 and 25-26', 'October 23-26')
+    date = date.replace('September 27-28, 200', 'September 27-28, 2000')
 
     match = re.search('(%s)\s{0,}(\d{1,2})[,.;]{0,1}\s+(\d{4})' % month_re, date)
     if match:
@@ -99,20 +107,14 @@ def in_visits(filename):
             cols = row.findAll('td')
             if cols and len(cols) == 4:
                 non_empty = re.compile(".+")
-                date = parse_date(clean(cols[0].find(text=non_empty)))
+                date = parse_date(clean(get_text(cols[0])))
                 if not date:
                     print "Skipping: %s" % str(row)
                     continue
-                visitor = clean(cols[1].find(text=non_empty))
-                country = clean(cols[2].find(text=non_empty))
-                description = clean(cols[3].find(text=non_empty))
+                visitor = clean(get_text(cols[1]))
+                country = clean(get_text(cols[2]))
+                description = clean(get_text(cols[3]))
                 out.writerow([date, country, visitor, description])
-
-def get_text(elem):
-    str = ""
-    for text in elem.findAll(text=True):
-        str += text
-    return str
 
 def out_visits(url, filename):
     """Grab US State Department lists of visits by the President and the
@@ -145,19 +147,23 @@ def out_visits(url, filename):
                 if len(visit.contents) < 5:
                     continue
 
-                date = parse_date(clean(visit.find(text=True)))
+                strings = visit.findAll(text=True)
+                strings = filter(lambda x: len(x) > 1, strings)
+                strings = map(clean, strings)
+
+                date = parse_date(strings[0])
                 if not date:
                     print "Skipping: %s" % str(visit)
                     continue
 
-                country = clean(visit.findAll(text=True)[1])
+                country = strings[1]
 
-                if len(visit.contents) == 7:
-                    city = clean(visit.findAll(text=True)[2])
-                    description = clean(visit.findAll(text=True)[3])
+                if len(strings) >= 4:
+                    city = strings[2]
+                    description = strings[3]
                 else:
                     city = ""
-                    description = clean(visit.findAll(text=True)[2])
+                    description = strings[2]
 
                 #print date
                 out.writerow([date, country, city, visitor, description])

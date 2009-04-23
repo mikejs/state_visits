@@ -12,23 +12,29 @@ def get_text(elem):
     return str
 
 def clean(str):
-    str = str.replace('&nbsp;', ' ').replace('&amp;', 'and').strip()
+    str = str.replace('&nbsp;', ' ').replace('&amp;', 'and')
+    str = str.replace('&rsquo;', "'").strip()
 
-    # Cleanup some country names
-    if str == 'Bosnia- Herzegovina':
-        str = 'Bosnia-Herzegovina'
-    elif str == "China, Peoples' Republic of":
-        str = "China, People's Republic of"
-    elif str == 'Congo, Democratic Republic of':
-        str = 'Congo, Democratic Republic of the'
-    elif str == 'Congo, Republic of':
-        str = 'Congo, Republic of the'
-    elif str in ['Poland (Government-in- exile)',
-                 'Poland (Government-in-exile)',
-                 'Poland (government-in- exile)']:
-        str = 'Poland (government-in-exile)'
-    elif str == 'U.S.S.R.':
-        str = 'USSR'
+    replace = {
+        "Bosnia- Herzegovina": "Bosnia-Herzegovina",
+        "Servia-Montenegro (Kosovo)": "Serbia-Montenegro (Kosovo)",
+        "China, Peoples' Republic of": "China, People's Republic of",
+        "China, People's Republic o": "China, People's Republic of",
+        "People's Republic of China": "China, People's Republic of",
+        "Congo, Democratic Republic of": "Congo, Democratic Republic of the",
+        "Congo, Republic of": "Congo, Republic of the",
+        "Congo. Republic of the": "Congo, Republic of the",
+        "Poland (Government-in- exile)": "Poland (government-in-exile)",
+        "Poland (Government-in-exile)": "Poland (government-in-exile)",
+        "Poland (government-in- exile)": "Poland (government-in-exile)",
+        "Kyryzstan": "Kyrgyzstan",
+        "Tajaikistan": "Tajikistan",
+        "Canada (Quebec)": "Canada",
+        "U.S.S.R": "U.S.S.R.",
+        }
+
+    if str in replace:
+        str = replace[str]
 
     return str.encode('ascii', 'replace')
 
